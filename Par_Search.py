@@ -44,6 +44,14 @@ class JoinScoreParallel:
     job_setup: str
 
     def __init__(self, url, col_names, read, write, cores):
+        """
+        initializes all values of Par-Search
+        :param url: url leading to a csv of input data
+        :param col_names: list containing string representations of column headers to be used for join-discovery
+        :param read: whether data should be read from a local file
+        :param write: whether data should be written to a local file
+        :param cores: degree of paralellization
+        """
         memory = "50g"
         if cores != '128':
             self.spark = SparkSession.builder \
@@ -69,6 +77,11 @@ class JoinScoreParallel:
         self.job_id = "col_par_"
 
     def start(self, rows):
+        """
+        starts multi-attribute join search
+        :param rows: number of rows used for query. if 0: use all rows available
+        :return: table and column join scores
+        """
         print("---")
         self.job_id = self.job_id + f"{rows}rows"
         print(f"{self.job_id}")
@@ -123,7 +136,11 @@ class JoinScoreParallel:
         return highscore_tbl, highscore_col
 
     def get_input_data(self, rows):
-
+        """
+        imports a csv-file from url and transforms into columns of input-data. using Spark DataFrames
+        :param rows: number of rows to use of input-data
+        :return: input-data as list-representation for query and as Spark DataFrame
+        """
         # import data
         url = "https://github.com/BigDaMa/COCOA/raw/master/dataset/movie.csv"
         self.spark = SparkSession.builder.master("local[1]").getOrCreate()
@@ -159,6 +176,11 @@ class JoinScoreParallel:
         return list_input_data, df_input_data
 
     def query_datasource(self, list_input_data):
+        """
+        queries with input-data for all matching keys in datasource
+        :param list_input_data: list representation of input-data
+        :return: DataFrame of unsorted-data: merged results of queries
+        """
         print(f"querying with {len(list_input_data[0])} rows, this might take a while...")
         db_handler = DbHandler(self.spark)
 
@@ -182,7 +204,12 @@ class JoinScoreParallel:
         return unsorted_data
 
     def join_discovery(self, df_unsorted_data, df_input_data):
-
+        """
+        filters, sorts and maps data for join-discovery
+        :param df_unsorted_data: Spark DataFrame of query results
+        :param df_input_data: Spark DataFrame on input-data
+        :return: Spark DataFrame of matches between unsorted-data and input-data
+        """
         # create mappings df (each cell value is mapped a MapKey, to identify its original row)
         df_mappings = df_input_data.select(concat_ws(" ", col(self.col_names[0]), col(self.col_names[1]))
                                            .alias("MapKey"), self.col_names[0], self.col_names[1]) \
@@ -278,7 +305,11 @@ class JoinScoreParallel:
         return df_matches
 
     def calculate_scores(self, df_matches):
-
+        """
+        calculates joinability scores for columns and tables
+        :param df_matches: Spark DataFrame of matching rows
+        :return: two Spark DataFrames: table-scores and column-scores
+        """
         score_per_col_all = df_matches.sort("table", "column") \
             .groupBy("table", "column") \
             .agg(count('column')) \

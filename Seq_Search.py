@@ -17,8 +17,7 @@ def log_runtime(action_name: str) -> None:
 
     :param action_name: Name of the action, will be added to the log output.
     :type action_name: str
-    :return: Nothing.
-    :rtype: None
+    :return: None
     """
     start_time = datetime.now()
 
@@ -40,6 +39,15 @@ class JoinScoreSequential:
     job_id: str
 
     def __init__(self, url, col_names, col_wise, cell_wise, row_wise, sql_wise):
+        """
+        initializes all values of Seq-Search
+        :param url: url leading to a csv of input data
+        :param col_names: list containing string representations of column headers to be used for join-discovery
+        :param col_wise: one query per column
+        :param cell_wise: one query per cell
+        :param row_wise: one query per row
+        :param sql_wise: one query per row, join-discovery on SQL-level
+        """
         self.url = url
         self.col_names = col_names
         self.sql = sql_wise
@@ -59,6 +67,11 @@ class JoinScoreSequential:
         self.job_id = self.job_id + "seq_"
 
     def start(self, rows):
+        """
+        starts multi-attribute join search
+        :param rows: number of rows used for query. if 0: use all rows available
+        :return: table and column join scores
+        """
         print("---")
         self.job_id = self.job_id + f"{rows}"
         print(self.job_id)
@@ -84,7 +97,7 @@ class JoinScoreSequential:
         for item in highscore:
             print(item)
 
-        return input_data, unsorted_data, matches, highscore
+        return highscore
 
     def get_input_data(self, rows, delimiter=","):
         """
@@ -95,6 +108,7 @@ class JoinScoreSequential:
         :return: input data: those columns of the given csv that should be used for querying. shortened to the number of
                  rows that should be used
         """
+
         self.db_handler = DbHandler()
 
         # import data, select search-columns and -rows , remove duplicates
@@ -127,6 +141,11 @@ class JoinScoreSequential:
         return input_data
 
     def query_datasource(self, input_data):
+        """
+        queries with input-data for all matching keys in datasource
+        :param input_data: list of lists of input-data
+        :return: list of lists of unsorted-data: merged results of queries
+        """
         print(f"querying with {len(input_data[0])} rows, this might take a while...")
         db_handler = DbHandler()
         unsorted_data = []
@@ -149,7 +168,14 @@ class JoinScoreSequential:
         db_handler.disconnect()
         return unsorted_data
 
-    def join_discovery(self, unsorted_data, input_columns):
+    def join_discovery(self, unsorted_data, input_data):
+        """
+        filters, sorts and maps data for join-discovery
+        :param unsorted_data: list of lists of query results
+        :param input_data: lit of lists of input-data
+        :return: list of lists of matches between unsorted-data and input-data
+        """
+
         matches = {}
         search_term_dict = {}
 
@@ -165,7 +191,7 @@ class JoinScoreSequential:
                 self.sort_into_dicts(col_query, search_term_dict)
 
             # iterate search_term_dict by search_columns rows
-            for x, y in zip(input_columns[0], input_columns[1]):  # iterate rows
+            for x, y in zip(input_data[0], input_data[1]):  # iterate rows
                 row_dict = {}
                 row_dict[x] = search_term_dict.get(x)
                 row_dict[y] = search_term_dict.get(y)
@@ -223,7 +249,12 @@ class JoinScoreSequential:
 
     @staticmethod
     def calculate_scores(matches):
-        # print("calculating scores...")
+        """
+        calculates joinability scores for columns and tables
+        :param matches: dictionary of lists containing matching rows per table
+        :return: two tables (list of lists): table-scores and column-scores
+        """
+
         high_score = []
         # key = table_id, value = item of class Match
         for key, value in matches.items():

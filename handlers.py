@@ -88,6 +88,12 @@ class DbHandler:
             raise CustomException(f"error calling the query: {e}")
 
     def query_join_discovery(self, key1, key2):
+        """
+        queries column 'tokenized' from main_table for key1 and key2
+        :param key1: string to find in tokenized
+        :param key2: string to find in tokenized
+        :return: list of Lines returned by query
+        """
         sql = f"""
                 select colX.tableid, colX.tokenized, colX.colid, colX.rowid, colY.tokenized, colY.colid, colY.rowid 
                 from( 
@@ -111,6 +117,11 @@ class DbHandler:
 
     # ---helper--- #
     def list_to_string(self, array):
+        """
+        converts an array of strings into a String representation, suited for SQL-queries
+        :param array: array of strings
+        :return: string representation of array
+        """
         for i, string in enumerate(array):
             array[i] = self.clean_argument_for_query(string)
 

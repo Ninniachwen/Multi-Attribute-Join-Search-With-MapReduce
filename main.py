@@ -8,6 +8,7 @@ COL_NAMES = ["director_name", "movie_title"]
 
 if __name__ == '__main__':
 
+
     # parse arguments
     parser = argparse.ArgumentParser()
     parser.add_argument('lines', metavar='lines', nargs='?', default="0",
