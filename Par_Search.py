@@ -148,7 +148,6 @@ class JoinScoreParallel:
         df_all_data = self.spark.read.csv("file://" + SparkFiles.get("movie.csv"), header=True, inferSchema=True)
 
         # trim DataFrame (df) to user defined size, remove duplicates, rows containing nan values and \xa0
-        print(rows)
         if rows > 0:
             df_input_data = df_all_data[self.col_names] \
                 .limit(rows) \

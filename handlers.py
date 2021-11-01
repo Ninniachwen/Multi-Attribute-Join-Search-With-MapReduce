@@ -66,14 +66,9 @@ class DbHandler:
         :return: list of Lines returned by query
         """
 
-        # return self.execute(f"select * from {self.main_table} "
-        #                    f"where tokenized IN {arguments} "
-        #                    )
-        print("QUERY REDUCED TO certain tables")
         return self.execute(f"select * from {self.main_table} "
                             f"where tokenized IN {arguments} "
-                            f"and (tableid = 29854416 "
-                            f"or tableid = 49739316) ")
+                            )
 
     def query_one_argument(self, argument):
         """
